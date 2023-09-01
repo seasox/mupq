@@ -25,6 +25,7 @@ void secure_set_bits(OUT pad_r_t *   r,
   // as the entire pad_r_t structure. Thus, we assert that the position of val
   // is at the beginning of r.
   bike_static_assert(offsetof(pad_r_t, val) == 0, val_wrong_pos_in_pad_r_t);
+  // maybe restrict?
   uint64_t *a64 = (uint64_t *)r;
   uint64_t  val, mask;
 
@@ -46,6 +47,11 @@ void secure_set_bits(OUT pad_r_t *   r,
       mask = (-1ULL) + (!secure_cmp32(pos_qw[j], i));
       val |= (pos_bit[j] & mask);
     }
-    a64[i] = val;
+    // TODO: send fault ready trigger here (maybe start sequence idk)
+    // TODO: wait N seconds
+    a64[i] = val;  // fault here!
+    // TODO: send r4, r5 here
+    // TODO: send fault window end sequence
   }
 }
+// TODO print sk to serial in main
