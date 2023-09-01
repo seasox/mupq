@@ -44,8 +44,31 @@ static int is_faulty_key(unsigned char *sk_in) {
   return 0;
 }
 
+#define GET_BIT(x, i) ((x>>i)&1)
+
+#define WEAK_KEY_F 7  // TODO how should we choose F?
+
 static int is_weak_key(unsigned char *sk_in) {
   aligned_sk_t *sk = (aligned_sk_t*)sk_in;
+#if 0
+  uint32_t h0_weight = r_bits_vector_weight(&sk->bin[0]);
+  uint32_t h1_weight = r_bits_vector_weight(&sk->bin[1]);
+  if(h0_weight != D || h1_weight != D) {
+    // this is a faulty key
+    return 0;
+  }
+  int count = 0;
+  for(int i = 0; i < R_BITS; ++i) {
+    if(GET_BIT(sk->bin[0].val, i)) {
+      count++;
+    } else {
+      count = 0;
+    }
+    if(count == WEAK_KEY_F) {
+      return 1;
+    }
+  }
+#endif
   return 0;
 }
 
