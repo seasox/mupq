@@ -25,6 +25,7 @@
 #define MUPQ_crypto_kem_enc NAMESPACE(crypto_kem_enc)
 #define MUPQ_crypto_kem_dec NAMESPACE(crypto_kem_dec)
 
+#if 0
 static int is_faulty_key(unsigned char *sk_in) {
   aligned_sk_t *sk = (aligned_sk_t*)sk_in;
   uint32_t h0_weight = r_bits_vector_weight(&sk->bin[0]);
@@ -71,6 +72,7 @@ static int is_weak_key(unsigned char *sk_in) {
 #endif
   return 0;
 }
+#endif
 
 static int test_fault_keygen(void)
 {
@@ -78,12 +80,7 @@ static int test_fault_keygen(void)
   unsigned char pk[MUPQ_CRYPTO_PUBLICKEYBYTES];
 
   MUPQ_crypto_kem_keypair(pk, sk);
-  if(is_faulty_key(sk)) {
-    hal_send_str("faulty");
-  }
-  if(is_weak_key(sk)) {
-    hal_send_str("weak");
-  }
+  hal_send_str(sk);
   return 0;
 }
 
@@ -94,6 +91,7 @@ int main(void)
   // marker for automated testing
   hal_send_str("==========================");
   while(1) {
+    hal_send_str("RUN");
     test_fault_keygen();
   }
   hal_send_str("#");
