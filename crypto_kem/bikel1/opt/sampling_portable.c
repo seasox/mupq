@@ -13,15 +13,18 @@
 #include "sampling.h"
 #include "hal.h"
 
+#include <libopencm3/stm32/gpio.h>
+
+
 #define MAX_WLIST_SIZE (T > D ? T : D)
 
-#define FAULT_WINDOW_START hal_send_str("FAULT_WINDOW_START");
+#define FAULT_WINDOW_START gpio_set(GPIOB, GPIO5); hal_send_str("FAULT_WINDOW_START");
 
 #define DELAY_SOME_TIME hal_send_str("DELAY");
 
 #define SEND_R4_R5 hal_send_str("SEND_R4_R5");
 
-#define FAULT_WINDOW_END hal_send_str("FAULT_WINDOW_END");
+#define FAULT_WINDOW_END gpio_clear(GPIOB, GPIO5); hal_send_str("FAULT_WINDOW_END");
 
 void secure_set_bits(OUT pad_r_t *   r,
                      IN const size_t first_pos,
@@ -59,10 +62,10 @@ void secure_set_bits(OUT pad_r_t *   r,
     // TODO: send fault ready trigger here (maybe start sequence idk)
     FAULT_WINDOW_START
     // TODO: wait N seconds
-    DELAY_SOME_TIME
+    //DELAY_SOME_TIME
     a64[i] = val;  // fault here!
     // TODO: send r4, r5 here
-    SEND_R4_R5
+    //SEND_R4_R5
     // TODO: send fault window end sequence
     FAULT_WINDOW_END
   }
