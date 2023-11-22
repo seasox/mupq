@@ -15,16 +15,65 @@
 
 #include <libopencm3/stm32/gpio.h>
 
-
 #define MAX_WLIST_SIZE (T > D ? T : D)
 
-#define FAULT_WINDOW_START gpio_set(GPIOB, GPIO5); hal_send_str("FAULT_WINDOW_START");
+#ifdef STM32F4
+  #define SCK_PIN PB3
+  #define MISO_PIN PB5
+  #define MOSI_PIN PB4
+#endif
 
-#define DELAY_SOME_TIME hal_send_str("DELAY");
+extern void fault_window_start(void);
+extern void fault_window_end(void);
+extern void delay_some_time(void);
+extern void send_r10_r11(void);
 
-#define SEND_R4_R5 hal_send_str("SEND_R4_R5");
+//#define FAULT_WINDOW_START() asm volatile("bl _fault_window_start\n")
 
-#define FAULT_WINDOW_END gpio_clear(GPIOB, GPIO5); hal_send_str("FAULT_WINDOW_END");
+//#define DELAY_SOME_TIME() asm volatile("bl _delay_some_time\n")
+
+//#define SEND_R4_R5() asm volatile("bl _send_r4_r5\n")
+
+//#define FAULT_WINDOW_END() asm volatile("bl fault_window_end\n")
+
+static int clk_state = 1;
+
+static void wait_falling() {
+    while (true) {
+        const int next = gpio_get(GPIOB, GPIO3);
+        if (clk_state && !next) {
+            clk_state = next;
+            break;
+        }
+        clk_state = next;
+    }
+}
+
+inline void gpio_set_bit(uint32_t gpioport, uint16_t gpios, uint8_t value) {
+  value ? gpio_set(gpioport, gpios) : gpio_clear(gpioport, gpios);
+}
+
+void _transfer(const uint8_t *ptr, uint32_t num_bytes) {
+    for (uint32_t i = 0; i < num_bytes; i++) {
+        const uint8_t value = ptr[i];
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 7) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 6) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 5) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 4) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 3) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 2) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, (value >> 1) & 0x01);
+        wait_falling();
+        gpio_set_bit(GPIOB, GPIO5, value & 0x01);
+    }
+}
 
 void secure_set_bits(OUT pad_r_t *   r,
                      IN const size_t first_pos,
@@ -59,15 +108,18 @@ void secure_set_bits(OUT pad_r_t *   r,
       mask = (-1ULL) + (!secure_cmp32(pos_qw[j], i));
       val |= (pos_bit[j] & mask);
     }
-    // TODO: send fault ready trigger here (maybe start sequence idk)
-    FAULT_WINDOW_START
-    // TODO: wait N seconds
-    //DELAY_SOME_TIME
     a64[i] = val;  // fault here!
-    // TODO: send r4, r5 here
-    //SEND_R4_R5
-    // TODO: send fault window end sequence
-    FAULT_WINDOW_END
+    // if MOSI is high, wait for fault. Otherwise just continue w/ KGen
+    if(gpio_get(GPIOB, GPIO4)) {
+      // send fault ready trigger
+      fault_window_start();
+      // wait N seconds
+      delay_some_time();
+      // send fault window end sequence
+      fault_window_end();
+      // send r10, r11 here
+      send_r10_r11();
+    }
   }
 }
 // TODO print sk to serial in main
