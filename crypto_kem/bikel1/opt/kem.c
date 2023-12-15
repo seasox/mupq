@@ -125,6 +125,8 @@ _INLINE_ ret_t reencrypt(OUT m_t *m, IN const pad_e_t *e, IN const ct_t *l_ct)
   return SUCCESS;
 }
 
+extern void fault_window_end(void);
+
 ////////////////////////////////////////////////////////////////////////////////
 // The three APIs below (keypair, encapsulate, decapsulate) are defined by NIST:
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +167,11 @@ int crypto_kem_keypair(OUT unsigned char *pk, OUT unsigned char *sk)
   l_sk.bin[0] = h0.val;
   l_sk.bin[1] = h1.val;
   l_sk.pk     = h.val;
+
+  // transfer SK for verification
+  _transfer(l_sk.bin[0].raw, R_BYTES);
+  _transfer(l_sk.bin[1].raw, R_BYTES);
+  fault_window_end();
 
   // Copy the data to the output buffers
   bike_memcpy(sk, &l_sk, sizeof(l_sk));

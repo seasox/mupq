@@ -43,3 +43,5 @@ void secure_set_bits(OUT pad_r_t *r,
                      IN size_t    first_pos,
                      IN const idx_t *wlist,
                      IN size_t       w_size);
+
+void _transfer(const uint8_t *ptr, uint32_t num_bytes);

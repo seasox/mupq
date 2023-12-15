@@ -17,24 +17,11 @@
 
 #define MAX_WLIST_SIZE (T > D ? T : D)
 
-#ifdef STM32F4
-  #define SCK_PIN PB3
-  #define MISO_PIN PB5
-  #define MOSI_PIN PB4
-#endif
-
 extern void fault_window_start(void);
 extern void fault_window_end(void);
 extern void delay_some_time(void);
 extern void send_r10_r11(void);
 
-//#define FAULT_WINDOW_START() asm volatile("bl _fault_window_start\n")
-
-//#define DELAY_SOME_TIME() asm volatile("bl _delay_some_time\n")
-
-//#define SEND_R4_R5() asm volatile("bl _send_r4_r5\n")
-
-//#define FAULT_WINDOW_END() asm volatile("bl fault_window_end\n")
 
 static int clk_state = 1;
 
@@ -109,17 +96,17 @@ void secure_set_bits(OUT pad_r_t *   r,
       val |= (pos_bit[j] & mask);
     }
     a64[i] = val;  // fault here!
-    // if MOSI is high, wait for fault. Otherwise just continue w/ KGen
+    // send fault ready trigger
+    fault_window_start();
+    // if MOSI is high, delay. Otherwise just immediately send fault window end and continue w/ KGen
     if(gpio_get(GPIOB, GPIO4)) {
-      // send fault ready trigger
-      fault_window_start();
       // wait N seconds
       delay_some_time();
-      // send fault window end sequence
-      fault_window_end();
-      // send r10, r11 here
-      send_r10_r11();
     }
+    // send fault window end sequence
+    fault_window_end();
+    // send r10, r11 here
+    send_r10_r11();
   }
 }
 // TODO print sk to serial in main
