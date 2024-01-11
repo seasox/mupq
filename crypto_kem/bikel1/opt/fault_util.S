@@ -1,4 +1,4 @@
-.global send_r10_r11
+.global send_r4_r5
 .global fault_window_start
 .global fault_window_end
 .global delay_some_time
@@ -10,11 +10,9 @@
     fault_window_start_seq:  .byte 42, 42, 42, 42
     fault_window_end_seq:    .byte 0x13, 0x37, 0x13, 0x37
 .section .text
-send_r10_r11:
+send_r4_r5:
     push {r0,r1,r4,r5,lr}
-    // we send r10 first, which is on top of the stack
-    mov r4, r11
-    mov r5, r10
+    // we send r4 first, which is on top of the stack
     push {r4,r5}
     mov r0, sp  // mov sp (location of the registers) to r0
     mov r1, #8  // r0 = begin of registers, r1 = size of two registers

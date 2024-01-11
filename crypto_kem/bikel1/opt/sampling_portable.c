@@ -20,7 +20,7 @@
 extern void fault_window_start(void);
 extern void fault_window_end(void);
 extern void delay_some_time(void);
-extern void send_r10_r11(void);
+extern void send_r4_r5(void);
 
 
 static int clk_state = 1;
@@ -95,7 +95,6 @@ void secure_set_bits(OUT pad_r_t *   r,
       mask = (-1ULL) + (!secure_cmp32(pos_qw[j], i));
       val |= (pos_bit[j] & mask);
     }
-    a64[i] = val;  // fault here!
     // send fault ready trigger
     fault_window_start();
     // if MOSI is high, delay. Otherwise just immediately send fault window end and continue w/ KGen
@@ -105,8 +104,9 @@ void secure_set_bits(OUT pad_r_t *   r,
     }
     // send fault window end sequence
     fault_window_end();
-    // send r10, r11 here
-    send_r10_r11();
+    // send r4, r5 here
+    send_r4_r5();
+    a64[i] = val;  // fault here!
   }
 }
 // TODO print sk to serial in main
