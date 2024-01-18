@@ -93,20 +93,19 @@ void secure_set_bits(OUT pad_r_t *   r,
     val = 0;
     for(size_t j = 0; j < w_size; j++) {
       mask = (-1ULL) + (!secure_cmp32(pos_qw[j], i));
+      // On a 32 bit DUT, rx and ry contain the 64 bits (val) that contain the new key part 
       val |= (pos_bit[j] & mask);
     }
-    // send fault ready trigger
-    fault_window_start();
-    // if MOSI is high, delay. Otherwise just immediately send fault window end and continue w/ KGen
+    fault_window_start(); // send fault ready trigger
+    // if MOSI PIN is high, delay. Else, immediately send fault window end
     if(gpio_get(GPIOB, GPIO4)) {
       // wait N seconds
       delay_some_time();
     }
-    // send fault window end sequence
-    fault_window_end();
-    // send r4, r5 here
+    fault_window_end(); // send fault window end sequence
+    // Declared in fault_util.S which sends r4 and r5 via GPIO serial.
     send_r4_r5();
-    a64[i] = val;  // fault here!
+    // The partial key is written back to the stack
+    a64[i] = val;
   }
 }
-// TODO print sk to serial in main
