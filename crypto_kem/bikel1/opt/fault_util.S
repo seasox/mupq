@@ -12,7 +12,9 @@
 .section .text
 send_r4_r5:
     push {r0,r1,r4,r5,lr}
-    // we send r4 first, which is on top of the stack
+    // some register cannot be pushed to the stack, copy them to pushable registers first
+    // mov r4, rX 
+    // mov r5, rY
     push {r4,r5}
     mov r0, sp  // mov sp (location of the registers) to r0
     mov r1, #8  // r0 = begin of registers, r1 = size of two registers
